@@ -22,7 +22,7 @@ const perReferralCost = 50000;
 
 
 var expressApp = express();
-var port = 8000;
+var port = 8008;
 
 expressApp.set('port', port);
 expressApp.use(morgan('dev'));
