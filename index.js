@@ -86,8 +86,8 @@ expressApp.get('/app/leads/meetings/:startDate/:endDate', async function (req, r
   let referral_meeting = 0;
   let cplead_meeting = 0;
 
-  console.log("data in meetings api: ", google_meetings, fb_meetings,referral_meetings,cplead_meetings);
 
+  
   // Meetings Data
   if (Array.isArray(google_meetings)) {
     google_meetings.forEach(item => {
@@ -150,7 +150,7 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
 
   response = await axios.get(process.env.ZOHO_API);
   const output = JSON.parse(response.data.details.output);
-  
+
   const leads = output.leads_data;
   const dateMap = {};
   const fbDateMap = {};
@@ -200,7 +200,7 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
     const lead_date = new Date(x.date);
     const dateStr = lead_date.toISOString().split('T')[0];
     if (start <= lead_date && end >= lead_date) {
-      if (x.source === 'Google AdWords' ||  x.source === 'Direct Call' ) {
+      if (x.source === 'Google AdWords' || x.source === 'Direct Call') {
         if (!dateMap[dateStr]) {
           dateMap[dateStr] = {
             budget: 0,
@@ -212,7 +212,7 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
             google_clicks: 0
           };
         }
-        if (x.mobile?.length > 9 && x.mobile?.length < 14) {
+        if (x || (x.mobile?.length > 9 && x.mobile?.length < 14)) {
           dateMap[dateStr].leads_count++;
           leads_count_google++;
         }
@@ -332,13 +332,12 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
           cpleadDateMap[dateStr].converted++;
           converted_cplead++;
         }
-        let cost = x.cpbudget? Number(x.cpbudget)*0.025 : 0;
+        let cost = x.cpbudget ? Number(x.cpbudget) * 0.025 : 0;
         cpleadDateMap[dateStr].budget += cost;
         total_cost_cplead += cost;
       }
     }
   }
-
   // Google Ads cost + clicks
   let c = 0, c1 = 0;
   for (let y of googleAds) {
@@ -544,10 +543,10 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
   response = await axios.get(process.env.ZOHO_API);
   const output = JSON.parse(response.data.details.output);
   let leads = output.leads_data;
-  leads = leads.filter((item)=>{
-    if(item.meetingdate){
+  leads = leads.filter((item) => {
+    if (item.meetingdate) {
       const lead_meet_date = new Date(item.meetingdate);
-      if(mstart <= lead_meet_date && mend >=lead_meet_date){
+      if (mstart <= lead_meet_date && mend >= lead_meet_date) {
         return item;
       }
     }
@@ -601,7 +600,7 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
     const lead_date = new Date(x.date);
     const dateStr = lead_date.toISOString().split('T')[0];
     if (start <= lead_date && end >= lead_date) {
-      if (x.source === 'Google AdWords' ||  x.source === 'Direct Call') {
+      if (x.source === 'Google AdWords' || x.source === 'Direct Call') {
         if (!dateMap[dateStr]) {
           dateMap[dateStr] = {
             budget: 0,
@@ -613,7 +612,7 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
             google_clicks: 0
           };
         }
-        if (x.mobile?.length > 9 && x.mobile?.length < 14) {
+        if (x || (x.mobile?.length > 9 && x.mobile?.length < 14)) {
           dateMap[dateStr].leads_count++;
           leads_count_google++;
         }
@@ -733,7 +732,7 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
           cpleadDateMap[dateStr].converted++;
           converted_cplead++;
         }
-        let cost = x.cpbudget? Number(x.cpbudget)*0.025 : 0;
+        let cost = x.cpbudget ? Number(x.cpbudget) * 0.025 : 0;
         cpleadDateMap[dateStr].budget += cost;
         total_cost_cplead += cost;
       }
