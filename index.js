@@ -87,7 +87,7 @@ expressApp.get('/app/leads/meetings/:startDate/:endDate', async function (req, r
   let cplead_meeting = 0;
 
 
-  
+
   // Meetings Data
   if (Array.isArray(google_meetings)) {
     google_meetings.forEach(item => {
@@ -200,7 +200,7 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
     const lead_date = new Date(x.date);
     const dateStr = lead_date.toISOString().split('T')[0];
     if (start <= lead_date && end >= lead_date) {
-      if (x.source === 'Google AdWords' || x.source === 'Direct Call') {
+      if (x.source === 'Google AdWords' || x.source === 'Direct Call' || !x.source) {
         if (!dateMap[dateStr]) {
           dateMap[dateStr] = {
             budget: 0,
@@ -600,7 +600,7 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
     const lead_date = new Date(x.date);
     const dateStr = lead_date.toISOString().split('T')[0];
     if (start <= lead_date && end >= lead_date) {
-      if (x.source === 'Google AdWords' || x.source === 'Direct Call') {
+      if (x.source === 'Google AdWords' || x.source === 'Direct Call' || !x.source) {
         if (!dateMap[dateStr]) {
           dateMap[dateStr] = {
             budget: 0,
