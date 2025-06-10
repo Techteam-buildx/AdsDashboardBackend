@@ -1,7 +1,7 @@
 const axios = require('axios');
 
-const accessToken = process.env.FB_ACCESS_TOKEN;
-const adAccountId = process.env.CLIENT_ACCOUNT_ID;
+const accessToken = process.env.FACEBOOK_ACCESS_TOKEN;
+const adAccountId = process.env.FACEBOOK_AD_ACCOUNT_ID;
 
 const getAdInsights = async (startDate, endDate) => {
   const timeRange = JSON.stringify({
