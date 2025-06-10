@@ -48,6 +48,10 @@ expressApp.get('/', function (req, res) {
   res.redirect('/app');
 });
 
+expressApp.get('/test', (req, res) => {
+  res.send("test ping received!")
+})
+
 function getAllDatesInRange(start, end) {
   const dates = [];
   const current = new Date(start);
