@@ -200,7 +200,7 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
     const lead_date = new Date(x.date);
     const dateStr = lead_date.toISOString().split('T')[0];
     if (start <= lead_date && end >= lead_date) {
-      if (x.source === 'Google AdWords' ) {
+      if (x.source === 'Google AdWords' ||  x.source === 'Direct Call' ) {
         if (!dateMap[dateStr]) {
           dateMap[dateStr] = {
             budget: 0,
