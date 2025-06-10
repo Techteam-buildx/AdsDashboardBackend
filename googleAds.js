@@ -5,8 +5,8 @@ const { getAccessToken } = require('./google_ads');
 async function fetchAds(startDate, endDate) {
     try {
         const accessToken = await getAccessToken();
-        const developerToken = process.env.DEVELOPER_TOKEN;
-        const customerId = process.env.CUSTOMER_ID; // account which has ads and campaigns linked.
+        const developerToken = process.env.GOOGLE_DEVELOPER_TOKEN;
+        const customerId = process.env.GOOGLE_CUSTOMER_TOKEN; // account which has ads and campaigns linked.
         const response = await axios.post(
             `https://googleads.googleapis.com/v19/customers/${customerId}/googleAds:searchStream`,
             {
@@ -47,4 +47,4 @@ async function fetchAds(startDate, endDate) {
     }
 }
 
-module.exports = { fetchAds };
+module.exports = {fetchAds};
