@@ -296,9 +296,9 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
         if (x.converted === "Converted") {
           referralDateMap[dateStr].converted++;
           converted_referral++;
+          referralDateMap[dateStr].budget += perReferralCost;
+          total_cost_referral += perReferralCost;
         }
-        referralDateMap[dateStr].budget += perReferralCost;
-        total_cost_referral += perReferralCost;
       }
       else if (x.source === 'CP Lead') {
         if (!cpleadDateMap[dateStr]) {
@@ -331,10 +331,10 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
         if (x.converted === "Converted") {
           cpleadDateMap[dateStr].converted++;
           converted_cplead++;
+          let cost = x.cpbudget ? Number(x.cpbudget) * 0.025 : 0;
+          cpleadDateMap[dateStr].budget += cost;
+          total_cost_cplead += cost;
         }
-        let cost = x.cpbudget ? Number(x.cpbudget) * 0.025 : 0;
-        cpleadDateMap[dateStr].budget += cost;
-        total_cost_cplead += cost;
       }
     }
   }
@@ -696,9 +696,9 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
         if (x.converted === "Converted") {
           referralDateMap[dateStr].converted++;
           converted_referral++;
+          referralDateMap[dateStr].budget += perReferralCost;
+          total_cost_referral += perReferralCost;
         }
-        referralDateMap[dateStr].budget += perReferralCost;
-        total_cost_referral += perReferralCost;
       }
       else if (x.source === 'CP Lead') {
         if (!cpleadDateMap[dateStr]) {
@@ -731,10 +731,10 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
         if (x.converted === "Converted") {
           cpleadDateMap[dateStr].converted++;
           converted_cplead++;
+          let cost = x.cpbudget ? Number(x.cpbudget) * 0.025 : 0;
+          cpleadDateMap[dateStr].budget += cost;
+          total_cost_cplead += cost;
         }
-        let cost = x.cpbudget ? Number(x.cpbudget) * 0.025 : 0;
-        cpleadDateMap[dateStr].budget += cost;
-        total_cost_cplead += cost;
       }
     }
   }
