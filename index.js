@@ -52,6 +52,11 @@ expressApp.get('/test', (req, res) => {
   res.send("test ping received!")
 })
 
+function formatDate(date) {
+  return date.toISOString().split("T")[0]; // "YYYY-MM-DD"
+}
+
+
 function getAllDatesInRange(start, end) {
   const dates = [];
   const current = new Date(start);
@@ -62,6 +67,51 @@ function getAllDatesInRange(start, end) {
   return dates;
 }
 
+
+async function getMonthlyAdInsights(startDateInput, endDateInput) {
+  const start = new Date(startDateInput);
+  const end = new Date(endDateInput);
+
+  const toYMD = (d) => {
+    const pad = (n) => String(n).padStart(2, "0");
+    const date = new Date(d);
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  };
+
+  const promises = [];
+  let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+
+  while (cursor <= end) {
+    let monthStart = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    let monthEnd   = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+
+    if (monthStart < start) monthStart = new Date(start);
+    if (monthEnd > end) monthEnd = new Date(end);
+
+    promises.push(getAdInsights(toYMD(monthStart), toYMD(monthEnd)));
+
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+  }
+
+  const monthlyResults = await Promise.all(promises);
+  // Flatten: each result is expected to have res.data from FB
+  let merged = [];
+ 
+
+  for(let i = 0;i<monthlyResults.length;i++){
+    let optimus = monthlyResults[i];
+    if(optimus!=undefined && optimus.length>0){
+      merged = [...merged,...optimus]
+    }
+  }
+
+  // Sort chronologically
+  merged.sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+  return merged;
+}
+
+
+
 // expressApp.get('/app/fresh', async (req, res) => {
 //   const data = await axios.get('https://buildx-org.myfreshworks.com/crm/sales/');
 //   console.log("data from fresherworks: ", data);
@@ -70,7 +120,6 @@ function getAllDatesInRange(start, end) {
 
 let response;
 expressApp.get('/app/leads/meetings/:startDate/:endDate', async function (req, res) {
-  console.log('meetings date: ', req.params);
   if (!response)
     response = await axios.get(process.env.ZOHO_API);
   const start = new Date(req.params.startDate);
@@ -140,16 +189,20 @@ expressApp.get('/app/leads/meetings/:startDate/:endDate', async function (req, r
 expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
   const start = new Date(req.params.startDate);
   const end = new Date(req.params.endDate);
-
   let fbAds = [];
-  try {
-    fbAds = await getAdInsights(req.params.startDate, req.params.endDate);
-  } catch (err) {
-    console.log("Facebook Ads Error:", err);
-  }
-
-  response = await axios.get(process.env.ZOHO_API);
-  const output = JSON.parse(response.data.details.output);
+  let googleAds = []
+  let output = []
+  try{
+    [fbAds, googleAds, output] = await Promise.all([
+        getMonthlyAdInsights(req.params.startDate, req.params.endDate),
+        // getAdInsights(req.params.startDate, req.params.endDate),
+        fetchAds(req.params.startDate, req.params.endDate),
+        axios.get(process.env.ZOHO_API).then(resp => {
+          response = resp
+          return JSON.parse(resp.data.details.output)
+        })
+    ])
+  
 
   const leads = output.leads_data;
   const dateMap = {};
@@ -192,9 +245,6 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
   let leads_count_cplead = 0;
   let converted_cplead = 0;
 
-
-
-  const googleAds = await fetchAds(req.params.startDate, req.params.endDate);
 
   for (let x of leads) {
     const lead_date = new Date(x.date);
@@ -338,6 +388,7 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
       }
     }
   }
+
   // Google Ads cost + clicks
   let c = 0, c1 = 0;
   for (let y of googleAds) {
@@ -450,9 +501,6 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
   const cpm_cplead = meetings_done_cplead ? total_cost_cplead / meetings_done_cplead : 0;
   const lpc_cplead = converted_cplead ? total_cost_cplead / converted_cplead : 0;
 
-
-
-
   // Send final response
   const sendData = {
     labels,
@@ -524,7 +572,12 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
     cplead_convertedData
   };
 
-  res.json(sendData);
+    res.json(sendData);
+  }
+  catch(err){
+    console.error("Error API Call: ",err.message)
+    res.send(`err: ${err}`)
+  }
 });
 
 expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDate', async function (req, res) {
@@ -534,14 +587,20 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
   const mend = new Date(req.params.mendDate);
 
   let fbAds = [];
-  try {
-    fbAds = await getAdInsights(req.params.startDate, req.params.endDate);
-  } catch (err) {
-    console.log("Facebook Ads Error:", err);
-  }
-
-  response = await axios.get(process.env.ZOHO_API);
-  const output = JSON.parse(response.data.details.output);
+  let googleAds = []
+  let output = []
+  try{
+    [fbAds, googleAds, output] = await Promise.all([
+        getMonthlyAdInsights(req.params.startDate, req.params.endDate),
+        // getAdInsights(req.params.startDate, req.params.endDate),
+        fetchAds(req.params.startDate, req.params.endDate),
+        axios.get(process.env.ZOHO_API).then(resp => {
+          response = resp
+          return JSON.parse(resp.data.details.output)
+        })
+    ])
+  
+  output = JSON.parse(response.data.details.output);
   let leads = output.leads_data;
   leads = leads.filter((item) => {
     if (item.meetingdate) {
@@ -593,9 +652,6 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
   let converted_cplead = 0;
 
 
-
-  const googleAds = await fetchAds(req.params.startDate, req.params.endDate);
-
   for (let x of leads) {
     const lead_date = new Date(x.date);
     const dateStr = lead_date.toISOString().split('T')[0];
@@ -926,6 +982,11 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
   };
 
   res.json(sendData);
+  }
+  catch(err){
+    console.error("Error API Call: ",err.message)
+    res.send(`err: ${err}`)
+  }
 });
 
 

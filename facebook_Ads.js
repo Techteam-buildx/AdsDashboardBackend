@@ -10,7 +10,7 @@ const getAdInsights = async (startDate, endDate) => {
   });
 
   let nextPage = `https://graph.facebook.com/v22.0/${adAccountId}/insights?` +
-    `fields=date_start,date_stop,ad_id,ad_name,campaign_name,impressions,clicks,spend` +
+    `fields=date_start,clicks,spend` +
     `&time_range=${encodeURIComponent(timeRange)}` +
     `&time_increment=1&level=ad&access_token=${accessToken}`;
 
