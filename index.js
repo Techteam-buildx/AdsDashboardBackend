@@ -127,6 +127,7 @@ expressApp.get('/app/leads/meetings/:startDate/:endDate', async function (req, r
   const output = JSON.parse(response.data.details.output);
   const google_meetings = output.google_meetings_data;
   const fb_meetings = output.facebook_meetings_data;
+  const socials_meetings = output.socials_meetings_data;
   const referral_meetings = output.referral_meetings_data;
   const cplead_meetings = output.cplead_meetings_data;
 
@@ -134,6 +135,7 @@ expressApp.get('/app/leads/meetings/:startDate/:endDate', async function (req, r
   let facebook_meeting = 0;
   let referral_meeting = 0;
   let cplead_meeting = 0;
+  let socials_meeting = 0;
 
 
 
@@ -152,6 +154,15 @@ expressApp.get('/app/leads/meetings/:startDate/:endDate', async function (req, r
       const cur_date = new Date(x);
       if (start <= cur_date && end >= cur_date) {
         facebook_meeting++;
+      }
+    }
+  }
+
+  if (Array.isArray(socials_meetings)) {
+    for (let x of socials_meetings) {
+      const cur_date = new Date(x);
+      if (start <= cur_date && end >= cur_date) {
+        socials_meeting++;
       }
     }
   }
@@ -178,6 +189,7 @@ expressApp.get('/app/leads/meetings/:startDate/:endDate', async function (req, r
   const respData = {
     google_meeting,
     facebook_meeting,
+    socials_meeting,
     referral_meeting,
     cplead_meeting
   }
@@ -467,6 +479,16 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
   const facebook_leadsData = labels.map(date => fbDateMap[date]?.leads_count || 0);
   const facebook_convertedData = labels.map(date => fbDateMap[date]?.converted || 0);
 
+  // Socials data arrays
+  const socials_budgetData = [],socials_meetingsData=[],socials_qualifiedData=[],socials_leadsData = [],socials_convertedData = [];
+  for(let i=0;i<labels.length;i++){
+    socials_budgetData.push(google_budgetData[i] + facebook_budgetData[i]);
+    socials_convertedData.push(google_convertedData[i] + facebook_convertedData[i])
+    socials_leadsData.push(google_leadsData[i] + facebook_leadsData[i])
+    socials_meetingsData.push(google_meetingsData[i] + facebook_meetingsData[i])
+    socials_qualifiedData.push(google_qualifiedData[i] + facebook_qualifiedData[i])
+  }
+
   // Referral data arrays
   const referral_budgetData = labels.map(date => referralDateMap[date]?.budget || 0);
   const referral_meetingsData = labels.map(date => referralDateMap[date]?.meetings_done || 0);
@@ -500,6 +522,11 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
   const cpl_cplead = leads_count_cplead ? total_cost_cplead / leads_count_cplead : 0;
   const cpm_cplead = meetings_done_cplead ? total_cost_cplead / meetings_done_cplead : 0;
   const lpc_cplead = converted_cplead ? total_cost_cplead / converted_cplead : 0;
+
+  const cpl_socials = (leads_count_google + leads_count_facebook) ? (total_cost_google + total_cost_facebook)/(leads_count_google + leads_count_facebook) : 0;
+  const cpm_socials = (meetings_done_google + meetings_done_facebook) ? (total_cost_google + total_cost_facebook)/(meetings_done_google + meetings_done_facebook) : 0;
+  const lpq_socials = (qualified_google + qualified_facebook) ? (leads_count_google + leads_count_facebook)/(qualified_google + qualified_facebook) : 0;
+  const lpc_socials = (converted_google + converted_facebook) ? (total_cost_facebook + total_cost_google)/(converted_google + converted_facebook) : 0;
 
   // Send final response
   const sendData = {
@@ -538,6 +565,24 @@ expressApp.get('/app/leads/:startDate/:endDate', async function (req, res) {
     facebook_qualifiedData,
     facebook_leadsData,
     facebook_convertedData,
+
+    // Socials
+    socials_budget: total_cost_google + total_cost_facebook,
+    socials_leads:leads_count_google + leads_count_facebook,
+    socials_qualified:qualified_google + qualified_facebook,
+    socials_future_qualified:future_qualified_google + future_qualified_facebook,
+    socials_converted: converted_google + converted_facebook,
+    socials_meetings_done: meetings_done_google + meetings_done_facebook,
+    cpl_socials,
+    cpm_socials,
+    lpq_socials,
+    lpc_socials,
+    socials_budgetData,
+    socials_meetingsData,
+    socials_qualifiedData,
+    socials_convertedData,
+    socials_leadsData,
+    
 
     // Referral
     referral_budget: total_cost_referral,
@@ -873,6 +918,16 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
   const facebook_leadsData = labels.map(date => fbDateMap[date]?.leads_count || 0);
   const facebook_convertedData = labels.map(date => fbDateMap[date]?.converted || 0);
 
+  // Socials data arrays
+  const socials_budgetData = [],socials_meetingsData=[],socials_qualifiedData=[],socials_leadsData = [],socials_convertedData = [];
+  for(let i=0;i<labels.length;i++){
+    socials_budgetData.push(google_budgetData[i] + facebook_budgetData[i]);
+    socials_convertedData.push(google_convertedData[i] + facebook_convertedData[i])
+    socials_leadsData.push(google_leadsData[i] + facebook_leadsData[i])
+    socials_meetingsData.push(google_meetingsData[i] + facebook_meetingsData[i])
+    socials_qualifiedData.push(google_qualifiedData[i] + facebook_qualifiedData[i])
+  }
+
   // Referral data arrays
   const referral_budgetData = labels.map(date => referralDateMap[date]?.budget || 0);
   const referral_meetingsData = labels.map(date => referralDateMap[date]?.meetings_done || 0);
@@ -906,6 +961,12 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
   const cpl_cplead = leads_count_cplead ? total_cost_cplead / leads_count_cplead : 0;
   const cpm_cplead = meetings_done_cplead ? total_cost_cplead / meetings_done_cplead : 0;
   const lpc_cplead = converted_cplead ? total_cost_cplead / converted_cplead : 0;
+
+
+  const cpl_socials = (leads_count_google + leads_count_facebook) ? (total_cost_google + total_cost_facebook)/(leads_count_google + leads_count_facebook) : 0;
+  const cpm_socials = (meetings_done_google + meetings_done_facebook) ? (total_cost_google + total_cost_facebook)/(meetings_done_google + meetings_done_facebook) : 0;
+  const lpq_socials = (qualified_google + qualified_facebook) ? (leads_count_google + leads_count_facebook)/(qualified_google + qualified_facebook) : 0;
+  const lpc_socials = (converted_google + converted_facebook) ? (total_cost_facebook + total_cost_google)/(converted_google + converted_facebook) : 0;
 
 
 
@@ -947,6 +1008,23 @@ expressApp.get('/app/leads/meetingfilter/:startDate/:endDate/:mstartDate/:mendDa
     facebook_qualifiedData,
     facebook_leadsData,
     facebook_convertedData,
+
+     // Socials
+    socials_budget: total_cost_google + total_cost_facebook,
+    socials_leads:leads_count_google + leads_count_facebook,
+    socials_qualified:qualified_google + qualified_facebook,
+    socials_future_qualified:future_qualified_google + future_qualified_facebook,
+    socials_converted: converted_google + converted_facebook,
+    socials_meetings_done: meetings_done_google + meetings_done_facebook,
+    cpl_socials,
+    cpm_socials,
+    lpq_socials,
+    lpc_socials,
+    socials_budgetData,
+    socials_meetingsData,
+    socials_qualifiedData,
+    socials_convertedData,
+    socials_leadsData,
 
     // Referral
     referral_budget: total_cost_referral,
