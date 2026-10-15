@@ -9,14 +9,16 @@ Live today: AWS API Gateway + Lambda, `https://2onghku7vk.execute-api.ap-south-1
 
 | Route | Used by |
 |---|---|
-| `GET /app/dashboard/:start/:end[?mstart=&mend=]` | new widget: metrics + meeting counts + `meta` in one call |
+| `GET /app/dashboard/:start/:end[?mstart=&mend=&city=]` | new widget: metrics + meeting counts + `meta` in one call |
+| `GET /app/config` | City list + GST rate for the widget |
 | `GET /app/leads/:start/:end` | legacy widget (r43) |
 | `GET /app/leads/meetingfilter/:start/:end/:mstart/:mend` | legacy widget |
 | `GET /app/leads/meetings/:start/:end` | legacy widget |
 | `GET /app/warm` | pre-loads caches |
 | `GET /test` | health check |
 
-Dates are `YYYY-MM-DD`. Every data response includes `meta.errors`. If Meta or Google fail,
+Dates are `YYYY-MM-DD`. Ad spend includes GST (validated against the client's monthly sheets:
+June −0.2%, August 0.0%). `meta.spendByCity` shows spend per city by campaign name. Every data response includes `meta.errors`. If Meta or Google fail,
 the response says so there instead of silently reporting ₹0 spend.
 
 ## Why it is fast now
@@ -38,7 +40,8 @@ to matter, the next step is to move the per-day spend + leads into DynamoDB/S3.
 Required: `ZOHO_API`, `FACEBOOK_ACCESS_TOKEN`, `FACEBOOK_AD_ACCOUNT_ID`, `GOOGLE_CLIENT_ID`,
 `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `GOOGLE_DEVELOPER_TOKEN`, `GOOGLE_CUSTOMER_TOKEN`.
 
-Optional: `CORS_ORIGIN` (default `*`; set to the widget origin), `LEADS_TTL_MS`,
+Optional: `GST_RATE` (default `0.18`, added to Meta/Google spend), `CITY_OWNERS_JSON`, `CITY_CAMPAIGNS_JSON`
+(see `zoho/README.md`), `CORS_ORIGIN` (default `*`; set to the widget origin), `LEADS_TTL_MS`,
 `LEADS_MAX_STALE_MS`, `SPEND_TTL_MS`, `SPEND_FINAL_AFTER_DAYS`, `ZOHO_TIMEOUT_MS`,
 `FACEBOOK_TIMEOUT_MS`, `GOOGLE_TIMEOUT_MS`, `GOOGLE_SPEND_RESOURCE` (`ad_group_ad` default;
 `customer` also counts Performance Max spend, but validate it first).

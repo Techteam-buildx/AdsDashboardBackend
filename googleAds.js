@@ -11,14 +11,14 @@ const SPEND_RESOURCE = process.env.GOOGLE_SPEND_RESOURCE || 'ad_group_ad';
 function buildQuery(startDate, endDate) {
   const where = [`segments.date BETWEEN '${startDate}' AND '${endDate}'`];
   if (SPEND_RESOURCE === 'ad_group_ad') where.push(`ad_group_ad.status != 'REMOVED'`);
-  return `SELECT segments.date, metrics.clicks, metrics.cost_micros
+  return `SELECT segments.date, campaign.name, metrics.clicks, metrics.cost_micros
           FROM ${SPEND_RESOURCE}
           WHERE ${where.join(' AND ')}`;
 }
 
 /**
- * Daily spend + clicks, summed per day. Throws on failure.
- * @returns {Promise<Array<{date:string, cost:number, clicks:number}>>}
+ * Daily spend + clicks, summed per day and campaign. Throws on failure.
+ * @returns {Promise<Array<{date:string, campaign:string, cost:number, clicks:number}>>}
  */
 async function getDailySpend(startDate, endDate) {
   try {
@@ -37,17 +37,19 @@ async function getDailySpend(startDate, endDate) {
       }
     );
 
-    const byDate = {};
+    const rows = {};
     for (const chunk of response.data || []) {
       for (const r of chunk.results || []) {
         const date = r.segments.date;
-        byDate[date] ||= { date, cost: 0, clicks: 0 };
+        const campaign = r.campaign?.name || '';
+        const key = `${date}|${campaign}`;
+        rows[key] ||= { date, campaign, cost: 0, clicks: 0 };
         // int64 fields come back as strings in the REST API
-        byDate[date].cost += Number(r.metrics.costMicros || 0) / 1000000;
-        byDate[date].clicks += Number(r.metrics.clicks || 0);
+        rows[key].cost += Number(r.metrics.costMicros || 0) / 1000000;
+        rows[key].clicks += Number(r.metrics.clicks || 0);
       }
     }
-    return Object.values(byDate);
+    return Object.values(rows);
   } catch (error) {
     const detail = error.response?.data?.[0]?.error?.message
       || error.response?.data?.error?.message

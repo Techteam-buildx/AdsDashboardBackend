@@ -40,13 +40,13 @@ test('getSpend: only fetches missing days and reports failures', async () => {
   const fb = require('../facebook_Ads');
   const google = require('../googleAds');
   const calls = [];
-  fb.getDailySpend = async (s, e) => { calls.push([s, e]); return [{ date: '2025-01-02', cost: 10, clicks: 1 }]; };
+  fb.getDailySpend = async (s, e) => { calls.push([s, e]); return [{ date: '2025-01-02', campaign: 'BLR Leads', cost: 10, clicks: 1 }]; };
   google.getDailySpend = async () => { throw new Error('Google Ads: quota'); };
   delete require.cache[require.resolve('../lib/data')];
   const { getSpend } = require('../lib/data');
 
   const first = await getSpend('facebook', '2025-01-01', '2025-01-03');
-  assert.deepStrictEqual(first.rows.map((r) => r.cost), [0, 10, 0]);
+  assert.deepStrictEqual(first.rows, [{ date: '2025-01-02', campaign: 'BLR Leads', cost: 10, clicks: 1 }]);
   assert.strictEqual(first.error, null);
 
   await getSpend('facebook', '2025-01-02', '2025-01-03'); // all old days cached

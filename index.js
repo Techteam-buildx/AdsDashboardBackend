@@ -2,12 +2,15 @@ require('dotenv').config()
 var express = require('express');
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
-const { buildLeadsResponse, countMeetings } = require('./lib/aggregate');
+const { buildLeadsResponse, countMeetings, spendByCity } = require('./lib/aggregate');
+const { CITIES, isCity } = require('./lib/cities');
 const { getZohoOutput, getSpend, warm } = require('./lib/data');
 
 var expressApp = express();
 var port = process.env.PORT || 5000;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+// Meta/Google report spend without GST; the business tracks budget including GST.
+const GST_RATE = Number(process.env.GST_RATE ?? 0.18);
 
 expressApp.set('port', port);
 expressApp.use(morgan('dev'));
@@ -22,6 +25,11 @@ expressApp.use('/', function (req, res, next) {
 expressApp.get('/test', (req, res) => {
   res.send("test ping received!")
 })
+
+// Options for the widget's filters.
+expressApp.get('/app/config', (req, res) => {
+  res.json({ cities: CITIES, gstRate: GST_RATE });
+});
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -38,7 +46,7 @@ function sendError(res, status, message) {
  * Ad-platform failures don't fail the request; they are reported in meta.errors
  * so the widget can show a warning instead of silently showing 0 spend.
  */
-async function loadDashboard({ startDate, endDate, meetingStartDate, meetingEndDate }) {
+async function loadDashboard({ startDate, endDate, meetingStartDate, meetingEndDate, city }) {
   const started = Date.now();
   const [zoho, fb, google] = await Promise.all([
     getZohoOutput(),
@@ -54,18 +62,26 @@ async function loadDashboard({ startDate, endDate, meetingStartDate, meetingEndD
     endDate,
     meetingStartDate,
     meetingEndDate,
+    gstRate: GST_RATE,
+    city,
   });
 
   const errors = {};
   if (fb.error) errors.facebook = fb.error;
   if (google.error) errors.google = google.error;
   if (zoho.stale) errors.leads = 'Lead data could not be refreshed; showing the last loaded copy.';
+  if (city && !(zoho.value.leads_data || []).some((l) => l.owner)) {
+    errors.city = 'Lead owner is not available yet, so leads cannot be split by city.';
+  }
 
   const meta = {
     startDate,
     endDate,
     meetingStartDate: meetingStartDate || null,
     meetingEndDate: meetingEndDate || null,
+    city: city || null,
+    gstRate: GST_RATE,
+    spendByCity: spendByCity([...fb.rows, ...google.rows], startDate, endDate, GST_RATE),
     leadsAsOf: new Date(zoho.fetchedAt).toISOString(),
     generatedAt: new Date().toISOString(),
     durationMs: Date.now() - started,
@@ -84,9 +100,13 @@ function handleFailure(res, err) {
 expressApp.get('/app/dashboard/:startDate/:endDate', async function (req, res) {
   const { startDate, endDate } = req.params;
   const { mstart, mend } = req.query;
+  const city = req.query.city || undefined;
   const meetingFilter = Boolean(mstart && mend);
   if (!validDates(startDate, endDate) || (meetingFilter && !validDates(mstart, mend))) {
     return sendError(res, 400, 'Dates must be YYYY-MM-DD');
+  }
+  if (city && !isCity(city)) {
+    return sendError(res, 400, `Unknown city. Use one of: ${CITIES.join(', ')}`);
   }
   try {
     const { data, zohoOutput, meta } = await loadDashboard({
@@ -94,10 +114,14 @@ expressApp.get('/app/dashboard/:startDate/:endDate', async function (req, res) {
       endDate,
       meetingStartDate: meetingFilter ? mstart : undefined,
       meetingEndDate: meetingFilter ? mend : undefined,
+      city,
     });
     const meetings = meetingFilter
-      ? countMeetings(zohoOutput, mstart, mend)
-      : countMeetings(zohoOutput, startDate, endDate);
+      ? countMeetings(zohoOutput, mstart, mend, city)
+      : countMeetings(zohoOutput, startDate, endDate, city);
+    if (city && (zohoOutput.google_meetings_data || []).some((m) => typeof m === 'string')) {
+      meta.errors.meetings = 'Meeting counts are not split by city yet (Zoho sends meeting dates without owner).';
+    }
     res.set('Cache-Control', 'no-store');
     res.json({ ...data, ...meetings, meta });
   } catch (err) {
