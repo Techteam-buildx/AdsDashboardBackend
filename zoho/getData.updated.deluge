@@ -1,0 +1,71 @@
+string button.getData()
+{
+// Returns the lead data used by the Marketing Dashboard backend.
+// Changes from the previous version:
+//  - adds the lead owner (needed for the City filter) to leads and meetings
+//  - no longer returns lead names or full mobile numbers; only the mobile length is needed
+//  - removes per-page / per-record `info` logging, which slowed every call down
+// Deploy the updated backend BEFORE saving this version: the old backend cannot read
+// the new meeting format or mobile_len.
+per_page = 200;
+pagenums = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200};
+leads = list();
+google_meetings = list();
+fb_meetings = list();
+referral_meetings = list();
+socials_meetings = list();
+cplead_meetings = list();
+for each  page in pagenums
+{
+	all_leads = zoho.crm.getRecords("Leads",page,per_page);
+	if(all_leads.size() == 0)
+	{
+		break;
+	}
+	for each  item in all_leads
+	{
+		source = item.get("Lead_Source");
+		owner_name = "";
+		owner = item.get("Owner");
+		if(owner != null)
+		{
+			owner_name = owner.get("name");
+		}
+		mobile = item.get("Mobile");
+		mobile_len = 0;
+		if(mobile != null)
+		{
+			mobile_len = mobile.length();
+		}
+		if(item.get("Meeting_Done_Date") != null)
+		{
+			meeting = {"date":item.get("Meeting_Done_Date").toDateTime().toString("yyyy-MM-dd"),"owner":owner_name};
+			if(source == "Meta Ads")
+			{
+				fb_meetings.add(meeting);
+				socials_meetings.add(meeting);
+			}
+			else if(source == "Referral Lead")
+			{
+				referral_meetings.add(meeting);
+			}
+			else if(source == "CP Lead")
+			{
+				cplead_meetings.add(meeting);
+			}
+			else
+			{
+				google_meetings.add(meeting);
+				socials_meetings.add(meeting);
+			}
+		}
+		obj = {"date":item.get("Created_Time").toDateTime().toString("yyyy-MM-dd"),"source":source,"mobile_len":mobile_len,"qs":item.get("Qualification_Status"),"iss":item.get("Internal_Sales_Status"),"converted":item.get("Sales_Leads_Status"),"meetingdate":item.get("Meeting_Done_Date"),"cpbudget":item.get("Budget_Lacs"),"owner":owner_name};
+		leads.add(obj);
+	}
+	if(all_leads.size() < per_page)
+	{
+		break;
+	}
+}
+return {"leads_data":leads,"google_meetings_data":google_meetings,"facebook_meetings_data":fb_meetings,"socials_meetings_data":socials_meetings,"referral_meetings_data":referral_meetings,"cplead_meetings_data":cplead_meetings};
+}

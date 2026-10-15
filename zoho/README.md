@@ -3,6 +3,10 @@
 Zoho CRM → Setup → Developer Hub → Functions → **getData** (REST API via API key is enabled).
 `getData1` is an older copy with the API key disabled.
 
+Current version: `getData.deluge`. Updated version: `getData.updated.deluge` (adds owner,
+drops names/full mobile numbers, removes heavy logging). **Deploy the updated backend first**: the old
+backend cannot read the new meeting format or `mobile_len`.
+
 ## Change needed for the City filter
 
 The backend matches cities on the lead owner. Two additions to the function's output:

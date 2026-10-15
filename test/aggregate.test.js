@@ -66,3 +66,15 @@ test('countMeetings counts dates per source within the range', () => {
     google_meeting: 2, facebook_meeting: 1, socials_meeting: 0, referral_meeting: 0, cplead_meeting: 0,
   });
 });
+
+test('mobile_len from the newer Zoho function is used for the mobile check', () => {
+  const r = buildLeadsResponse({
+    leads: [
+      { date: '2026-10-01', source: 'Meta Ads', mobile_len: 10 },
+      { date: '2026-10-01', source: 'Meta Ads', mobile_len: 5 },
+      { date: '2026-10-01', source: 'Meta Ads', mobile_len: 0 },
+    ],
+    googleSpend: [], facebookSpend: [], startDate: '2026-10-01', endDate: '2026-10-01',
+  });
+  assert.strictEqual(r.facebook_leads, 1);
+});

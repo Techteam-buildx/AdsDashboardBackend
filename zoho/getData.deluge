@@ -1,0 +1,388 @@
+string button.getData()
+{
+per_page = 200;
+dates = list();
+pagenums = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200};
+count = 0;
+leads = list();
+google_meetings = list();
+fb_meetings = list();
+referral_meetings = list();
+socials_meetings = list();
+cplead_meetings = list();
+one = true;
+two = true;
+cccc = 0;
+for each  page in pagenums
+{
+	all_leads = "";
+	all_leads = zoho.crm.getRecords("Leads",page,per_page);
+	info all_leads;
+	if(all_leads.length() > 0)
+	{
+		obj = {};
+		for each  item in all_leads
+		{
+			if(cccc == 0)
+			{
+				lead_name = item.get("Site_visitor");
+				if(lead_name.size())
+				{
+					info lead_name;
+				}
+				// 				cccc = 1;
+			}
+			source = item.get("Lead_Source");
+			if(item.contains("Meeting_Done_Date") && item.get("Meeting_Done_Date") != null)
+			{
+				meeting_date = item.get("Meeting_Done_Date").toDateTime().toString("yyyy-MM-dd");
+				if(source == "Meta Ads")
+				{
+					fb_meetings.add(meeting_date);
+					socials_meetings.add(meeting_date);
+				}
+				else if(source == "Referral Lead")
+				{
+					referral_meetings.add(meeting_date);
+				}
+				else if(source == "CP Lead")
+				{
+					cplead_meetings.add(meeting_date);
+				}
+				else
+				{
+					google_meetings.add(meeting_date);
+					socials_meetings.add(meeting_date);
+				}
+			}
+			ct = item.get("Created_Time").toDateTime().toString("yyyy-MM-dd");
+			all_costs = item.get("Actual_Cost");
+			mobile = item.get("Mobile");
+			name = item.get("Last_Name");
+			qualification_Status = item.get("Qualification_Status");
+			internal_sales_status = item.get("Internal_Sales_Status");
+			converted = item.get("Sales_Leads_Status");
+			owner = item.get("Owner");
+			mdd = item.get("Meeting_Done_Date");
+			cpb = item.get("Budget_Lacs");
+			// 			site_visitor = item.get("")
+			info owner;
+			obj = {"date":ct,"name":name,"source":source,"mobile":mobile,"name":name,"qs":qualification_Status,"iss":internal_sales_status,"cost":all_costs,"converted":converted,"meetingdate":mdd,"cpbudget":cpb};
+			leads.add(obj);
+		}
+	}
+	else
+	{
+		break;
+	}
+}
+return {"leads_data":leads,"google_meetings_data":google_meetings,"facebook_meetings_data":fb_meetings,"socials_meetings_data":socials_meetings,"referral_meetings_data":referral_meetings,"cplead_meetings_data":cplead_meetings};
+// info leads;
+// info ads;
+// 	all_ads = "";
+// 	if (two) {
+// 		all_ads = zoho.crm.getRecords("Campaigns", page, per_page);
+// 	}
+// 	if (all_ads.length() > 0) {
+// 		for each item in all_ads{
+// 			ads.add(item);
+// 		}
+// 	} else {
+// 		two = false;
+// 	}
+// }
+// info ads.length();
+// return ads;
+// 	for each ad in ads{
+// 		ad_time = ad.get("Created_Time").toDateTime().toString("yyyy-MM-dd");
+// 		if (ad_time.length() > 0) {
+// 			ad_date.insert(ad_time);
+// 		}
+// 		for each item in pagenums2{
+// 			count = count + 1;
+// 		} 
+// 	}
+// }
+// info "count: " + count;
+// data = List();
+// for each  pagenum in pagenums
+// {
+// 	leads = zoho.crm.getRecords("Leads",pagenum,per_page);
+// 	lead_time = "";
+// 	if(leads.size() == 0)
+// 	{
+// 		break;
+// 	}
+// 	for each  item in leads
+// 	{
+// 		ct = "";
+// 		if(item.contains("Created_Time") && item.get("Created_Time") != null)
+// 		{
+// 			ct = item.get("Created_Time").toString("yyyy-MM-dd");
+// 		}
+// 		// 		ca = "";
+// 		// 		if (item.contains("Created_At")) {
+// 		// 			ca = item.get("Created_At").toDate("yyyy-MM-dd").toString();
+// 		// 		}
+// 		budget = 0;
+// 		for each  page in pagenums
+// 		{
+// 			for each  ad in ads_data
+// 			{
+// 				ad_date = ad.get("Created_Time").toString("yyyy-MM-dd");
+// 				if(ad_date.length() > 0)
+// 				{
+// 					info ad;
+// 				}
+// 			}
+// 		}
+// 	}
+// }
+// 		budget = item.get("Budget_Lacs");
+// 		source = item.get("Lead_Source");
+// 		if (item.contains("Created_Time")) {
+// 			time = item.get("Created_Time").toDate("yyyy-MM-dd").toString();
+// 			if (time.length() > 0) {
+// 				lead_time = time;
+// 			}
+// 		}
+// 		if (item.contains("Created_At") && lead_time == "") {
+// 			time = item.get("Created_At").toDate("yyyy-MM-dd").toString();
+// 			if (time.length() > 0) {
+// 				lead_time = time;
+// 			}
+// 		}
+// 		if (lead_time != "") {
+// 			for each ele in dates {
+// 				if (lead_time == ele) {
+// 				}
+// 			}
+// 		}
+// 		if (lead_time != "") {
+// 			break;
+// 		}
+// 	}
+// 	response = {"date": "2020-03-01", "data": {"leads": 0, "meetings": 0, "clicks": 0, "conversions": 0, "qualified": 0, "fqualified": 0}};
+// 	if (data.length() > 1) {
+// 		for each item in data {
+// 			if )
+// 		}
+// 	}
+// 	data.add(response);
+// for each pagenum in {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20}
+// {
+//     leads = zoho.crm.getRecords("Leads", pagenum, per_page);
+//     if (leads.size() == 0)
+//     {
+// 		info "broken page: " + pagenum ;
+//         break;
+//     }
+// 	cnt = 0;
+// 	for each lead in leads {
+// 		if (cnt == 0) {
+// 			info lead;
+// 			cnt = 1;
+// 		}
+// 	}
+//     for each lead in leads
+//     {
+//         data = "";
+//         if (lead.contains("Created_Time") && lead.get("Created_Time") != null)
+//         {
+//             data = data + lead.get("Created_Time").toString() + " ";
+//         }
+//         if (lead.contains("Created_At") && lead.get("Created_At") != null)
+//         {
+//             data = data + lead.get("Created_At").toString() + " ";
+//         }
+//         if (lead.contains("Lead_Name") && lead.get("Lead_Name") != null)
+//         {
+//             data = data + lead.get("Lead_Name").toString();
+//         }
+//         if (data.length() > 0)
+//         {
+//             dates.add(data);
+//         }
+//     }
+// }
+// // Now build a JSON-like string
+// str = "[";
+// for each item in dates
+// {
+//     str = str + "\"" + item + "\",";
+// }
+// str = str + "]";
+// info str;
+// for each  lead in all_leads
+// {
+// 	cnt = cnt + 1;
+// 	if(cnt == 3)
+// 	{
+// 		info "broken";
+// 		break;
+// 	}
+// }
+// info "cnt after loop: " + cnt;
+// for each  lead in all_leads
+// {
+// 	date_cat = lead.get("Created_At");
+// 	if(date_cat != null)
+// 	{
+// 		dates.add(date_cat);
+// 	}
+// 	else
+// 	{
+// 		date_ct = lead.get("Created_Time");
+// 		if(date_ct != null && date_ct.toString().length() < 26)
+// 		{
+// 			dates.add(date_ct);
+// 		}
+// 		else if(date_ct.toString().length() > 25)
+// 		{
+// 			info date_ct;
+// 			cnt = cnt + 1;
+// 			extracted_date = "";
+// 			for each  c in date_ct
+// 			{
+// 				if(c == ",")
+// 				{
+// 					dates.add(extracted_date.toDate("yyyy-MM-dd"));
+// 					extracted_date = "";
+// 				}
+// 			}
+// 		}
+// 	}
+// }
+// info "cnt: " + cnt;
+// for each  item in dates
+// {
+// 	info item + "\n";
+// }
+// for each  lead in all_leads
+// {
+// 	if(lead.contains("Created_Time"))
+// 	{
+// 		lead_date = lead.get("Created_Time");
+// 		lead_generated_date = lead_date.toDate("yyyy-MM-dd'T'HH:mm:ssXXX");
+// 		info lead_generated_date;
+// 		dates.add(lead_generated_date);
+// 	}
+// 	if(cnt == 0 && lead.contains("Created_At"))
+// 	{
+// 		lead_created = lead.get("Created_At");
+// 		if (lead_created != "") {
+// 			info "BY ARNAV: " + lead_created;
+// 			cnt = 1;
+// 		}
+// 	}
+// }
+// info dates;
+// // total ads
+// total_cost = 0;
+// for each  ad in all_campaigns
+// {
+// 	if(ad.contains("Actual_Cost"))
+// 	{
+// 		if(ad.contains("Type"))
+// 		{
+// 			type = ad.get("Type");
+// 			if(ad.contains("Created_Time"))
+// 			{
+// 				ad_date = ad.get("Created_Time");
+// 				if(ad_date != null && ad_date != "")
+// 				{
+// 					try 
+// 					{
+// 						adDate = ad_date.toDate("yyyy-MM-dd'T'HH:mm:ssXXX");
+// 						if(adDate >= start && adDate <= end)
+// 						{
+// 							cost = ad.get("Actual_Cost");
+// 							if(type == "Google AdWords")
+// 							{
+// 								google = google + cost;
+// 							}
+// 							else
+// 							{
+// 								facebook = facebook + cost;
+// 							}
+// 						}
+// 					}
+// 					catch (e)
+// 					{
+// 						info "Error in: " + ad_date;
+// 						info e.message;
+// 					}
+// 				}
+// 				else
+// 				{
+// 					info "Skipping : " + ad_date;
+// 				}
+// 			}
+// 		}
+// 	}
+// }
+// // total google leads with source Google and having phone number's lenght greater than 10
+// google_leads = 0;
+// facebook_leads = 0;
+// for each  lead in all_leads
+// {
+// 	if(lead.contains("first_source"))
+// 	{
+// 		source = lead.get("first_source");
+// 		if(lead.contains("Mobile"))
+// 		{
+// 			mobile = lead.get("Mobile");
+// 			if(mobile.length() > 9)
+// 			{
+// 				if(lead.contains("Created_Time"))
+// 				{
+// 					lead_date = lead.get("Created_Time");
+// 					if(lead_date != null && lead_date != "")
+// 					{
+// 						try 
+// 						{
+// 							leadDate = lead_date.toDate("yyyy-MM-dd'T'HH:mm:ssXXX");
+// 							if(leadDate >= start && leadDate <= end)
+// 							{
+// 								if(source == "google")
+// 								{
+// 									google_leads = google_leads + 1;
+// 								}
+// 								else
+// 								{
+// 									facebook_leads = facebook_leads + 1;
+// 								}
+// 							}
+// 						}
+// 						catch (e)
+// 						{
+// 							info "Error IN:" + lead_date;
+// 							info e.message;
+// 						}
+// 					}
+// 					else
+// 					{
+// 						info "Skipping: " + lead_date;
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// }
+// info "google" + google;
+// info "facebook" + facebook;
+// info "google leads" + google_leads;
+// info "facebook leads" + facebook_leads;
+// // Cost / Leads
+// gC = 0;
+// if(google_leads != 0)
+// {
+// 	gC = google / google_leads;
+// }
+// fC = 0;
+// if(facebook_leads != 0)
+// {
+// 	fC = facebook / facebook_leads;
+// }
+// return "google leads: " + gC + "facebook Leads: " + fC;
+}
