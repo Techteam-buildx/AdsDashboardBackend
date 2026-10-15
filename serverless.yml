@@ -1,0 +1,38 @@
+# Optional: Serverless Framework config for deploying this backend to AWS Lambda.
+# The live API (2onghku7vk.execute-api.ap-south-1.amazonaws.com/dev) was created outside
+# this repo. Before using this file, check how that API/Lambda was set up. Deploying
+# this as a new service creates a NEW API URL, and the widget's API_BASE must then be updated.
+# If you only replace the existing Lambda's code, set its handler to `lambda.handler`
+# and add an EventBridge rule (rate 5 minutes) with input {"warm": true}.
+
+service: buildx-ads-dashboard
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-south-1
+  stage: dev
+  memorySize: 1024 # more memory = more CPU for parsing the Zoho payload
+  timeout: 29 # API Gateway's hard limit
+  environment:
+    ZOHO_API: ${env:ZOHO_API}
+    FACEBOOK_ACCESS_TOKEN: ${env:FACEBOOK_ACCESS_TOKEN}
+    FACEBOOK_AD_ACCOUNT_ID: ${env:FACEBOOK_AD_ACCOUNT_ID}
+    GOOGLE_CLIENT_ID: ${env:GOOGLE_CLIENT_ID}
+    GOOGLE_CLIENT_SECRET: ${env:GOOGLE_CLIENT_SECRET}
+    GOOGLE_REFRESH_TOKEN: ${env:GOOGLE_REFRESH_TOKEN}
+    GOOGLE_DEVELOPER_TOKEN: ${env:GOOGLE_DEVELOPER_TOKEN}
+    GOOGLE_CUSTOMER_TOKEN: ${env:GOOGLE_CUSTOMER_TOKEN}
+    CORS_ORIGIN: ${env:CORS_ORIGIN, '*'}
+
+functions:
+  api:
+    handler: lambda.handler
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+      - schedule:
+          rate: rate(5 minutes)
+          input:
+            warm: true
