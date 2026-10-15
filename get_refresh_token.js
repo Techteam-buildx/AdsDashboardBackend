@@ -1,10 +1,11 @@
 const express = require('express');
-const { GoogleAdsApi } = require('google-ads-api');
 const { OAuth2Client } = require('google-auth-library');
 
 
-let CLIENT_ID = '293344834-fga5b55qt7oqfq9j2oceo2pqv4soimjt.apps.googleusercontent.com';
-let CLIENT_SECRET = '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';
+// One-off helper to mint GOOGLE_REFRESH_TOKEN. Reads credentials from .env.
+require('dotenv').config();
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const REDIRECT_URI = 'http://localhost:3000/oauth2callback';
 
 

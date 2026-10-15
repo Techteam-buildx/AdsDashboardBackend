@@ -1,0 +1,68 @@
+const test = require('node:test');
+const assert = require('node:assert');
+const { buildLeadsResponse, countMeetings } = require('../lib/aggregate');
+
+const leads = [
+  { date: '2026-10-01', source: 'Google AdWords', mobile: '1', qs: 'Qualified', iss: 'Meeting Done', converted: 'Cold' },
+  { date: '2026-10-01', source: null, mobile: '9876543210', qs: 'Future Qualified', iss: 'First Call', converted: 'Dead' },
+  { date: '2026-10-02', source: 'Meta Ads', mobile: '9876543210', qs: 'Qualified', iss: 'Meeting Done', converted: 'Converted', meetingdate: '2026-10-05' },
+  { date: '2026-10-02', source: 'Meta Ads', mobile: '123', qs: 'Not Valid', iss: 'First Call', converted: 'Dead' },
+  { date: '2026-10-02', source: 'Referral Lead', mobile: '9876543210', qs: 'Qualified', iss: 'Meeting Done', converted: 'Converted' },
+  { date: '2026-10-03', source: 'CP Lead', mobile: '9876543210', qs: 'Qualified', iss: 'Meeting Done', converted: 'Converted', cpbudget: '1000000' },
+  { date: '2026-09-30', source: 'Google AdWords', mobile: '9876543210', qs: 'Qualified', iss: 'Meeting Done', converted: 'Converted' },
+  { date: '2026-10-02', source: 'Website', mobile: '9876543210', qs: 'Qualified', iss: 'Meeting Done', converted: 'Converted' },
+];
+const googleSpend = [
+  { date: '2026-10-01', cost: 1000, clicks: 10 },
+  { date: '2026-10-03', cost: 500, clicks: 5 },
+  { date: '2026-09-30', cost: 9999, clicks: 99 },
+];
+const facebookSpend = [{ date: '2026-10-02', cost: 2000, clicks: 20 }];
+
+test('aggregates leads and spend per source for the range', () => {
+  const r = buildLeadsResponse({ leads, googleSpend, facebookSpend, startDate: '2026-10-01', endDate: '2026-10-03' });
+
+  assert.deepStrictEqual(r.labels, ['2026-10-01', '2026-10-02', '2026-10-03']);
+  // Google: counts every lead (incl. no source), spend outside the range ignored
+  assert.strictEqual(r.google_budget, 1500);
+  assert.strictEqual(r.google_clicks, 15);
+  assert.strictEqual(r.google_leads, 2);
+  assert.strictEqual(r.google_qualified, 1);
+  assert.strictEqual(r.google_future_qualified, 1);
+  assert.strictEqual(r.cpl_google, 750);
+  assert.deepStrictEqual(r.google_budgetData, [1000, 0, 500]);
+  // Meta: only leads with a 10–13 char mobile are counted
+  assert.strictEqual(r.facebook_leads, 1);
+  assert.strictEqual(r.facebook_budget, 2000);
+  assert.strictEqual(r.facebook_converted, 1);
+  // Socials = Google + Meta
+  assert.strictEqual(r.socials_budget, 3500);
+  assert.deepStrictEqual(r.socials_budgetData, [1000, 2000, 500]);
+  // Referral: fixed cost per conversion; CP: 2.5% commission
+  assert.strictEqual(r.referral_budget, 50000);
+  assert.strictEqual(r.cpl_referral, 50000);
+  assert.strictEqual(r.cplead_budget, 25000);
+});
+
+test('meeting-date filter restricts leads to meetings in that window', () => {
+  const r = buildLeadsResponse({
+    leads, googleSpend, facebookSpend,
+    startDate: '2026-10-01', endDate: '2026-10-03',
+    meetingStartDate: '2026-10-04', meetingEndDate: '2026-10-06',
+  });
+  assert.strictEqual(r.facebook_leads, 1);
+  assert.strictEqual(r.google_leads, 0);
+  assert.strictEqual(r.referral_leads, 0);
+  // spend is still for the lead range
+  assert.strictEqual(r.facebook_budget, 2000);
+});
+
+test('countMeetings counts dates per source within the range', () => {
+  const out = {
+    google_meetings_data: ['2026-10-01', '2026-10-05', '2026-11-01'],
+    facebook_meetings_data: ['2026-10-02'],
+  };
+  assert.deepStrictEqual(countMeetings(out, '2026-10-01', '2026-10-31'), {
+    google_meeting: 2, facebook_meeting: 1, socials_meeting: 0, referral_meeting: 0, cplead_meeting: 0,
+  });
+});
