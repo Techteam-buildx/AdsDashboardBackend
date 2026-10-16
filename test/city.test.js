@@ -7,6 +7,12 @@ test('owners map to cities by first name, case-insensitively', () => {
   assert.strictEqual(cityForOwner('Sudipti Sharma'), 'Bangalore');
   assert.strictEqual(cityForOwner({ name: 'naveen K', id: '1' }), 'Bangalore');
   assert.strictEqual(cityForOwner('Madhuri'), 'Hyderabad');
+  // names as they appear in Zoho
+  assert.strictEqual(cityForOwner('sudeepthi sudeepthi'), 'Bangalore');
+  assert.strictEqual(cityForOwner('shreya shreya'), 'Bangalore');
+  assert.strictEqual(cityForOwner('Madhuri Nara'), 'Hyderabad');
+  assert.strictEqual(cityForOwner('Hosur IS'), 'Hossur');
+  assert.strictEqual(cityForOwner('pankaj pankaj'), null);
   assert.strictEqual(cityForOwner('Someone Else'), null);
   assert.strictEqual(cityForOwner(null), null);
 });
