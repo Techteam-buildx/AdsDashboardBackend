@@ -23,12 +23,28 @@ test('cache: serves a flagged stale copy when reload fails', async () => {
   assert.deepStrictEqual([r.value, r.stale], ['old', true]);
 });
 
-test('cache: serves stale copy when reload is slower than waitMs', async () => {
+test('cache: refresh:false returns an existing copy without loading', async () => {
   clearCache();
   await cached('w', async () => 'old', { ttlMs: 1000 });
-  const slow = () => new Promise((r) => setTimeout(() => r('new'), 200));
-  const r = await cached('w', slow, { ttlMs: 0, maxStaleMs: 60000, waitMs: 20 });
-  assert.deepStrictEqual([r.value, r.stale], ['old', true]);
+  let called = false;
+  const r = await cached('w', async () => { called = true; return 'new'; }, { ttlMs: 0, maxStaleMs: 60000, refresh: false });
+  assert.deepStrictEqual([r.value, r.stale, called], ['old', true, false]);
+});
+
+test('cache: refresh:true waits for the full load', async () => {
+  clearCache();
+  await cached('f', async () => 'old', { ttlMs: 1000 });
+  const slow = () => new Promise((r) => setTimeout(() => r('new'), 100));
+  const r = await cached('f', slow, { ttlMs: 0, maxStaleMs: 60000, refresh: true });
+  assert.deepStrictEqual([r.value, r.stale], ['new', false]);
+});
+
+test('cache: a stuck in-flight load is replaced after inflightTimeoutMs', async () => {
+  clearCache();
+  cached('s2', () => new Promise(() => {}), { ttlMs: 1000, inflightTimeoutMs: 20 }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 40));
+  const r = await cached('s2', async () => 'fresh', { ttlMs: 1000, inflightTimeoutMs: 20 });
+  assert.strictEqual(r.value, 'fresh');
 });
 
 test('cache: with no stale copy, a failed load is an error', async () => {

@@ -69,7 +69,7 @@ async function loadDashboard({ startDate, endDate, meetingStartDate, meetingEndD
   const errors = {};
   if (fb.error) errors.facebook = fb.error;
   if (google.error) errors.google = google.error;
-  if (zoho.stale) errors.leads = 'Lead data could not be refreshed; showing the last loaded copy.';
+  if (zoho.stale) errors.leads = `Lead data was last refreshed at ${new Date(zoho.fetchedAt).toISOString()}.`;
   if (city && !(zoho.value.leads_data || []).some((l) => l.owner)) {
     errors.city = 'Lead owner is not available yet, so leads cannot be split by city.';
   }
