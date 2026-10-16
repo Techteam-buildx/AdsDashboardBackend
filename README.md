@@ -23,8 +23,9 @@ the response says so there instead of silently reporting ₹0 spend.
 
 ## Why it is fast now
 
-* The Zoho lead payload is cached for 10 min (`LEADS_TTL_MS`). If a refresh fails or is slow,
-  a copy up to 6 h old is served and flagged (`meta.errors.leads`).
+* The Zoho lead payload is refreshed by the scheduled warm-up about every 15 min (`WARM_LEADS_REFRESH_MS`);
+  user requests never wait on Zoho while a copy exists. If refreshes fail, a copy up to 6 h old is
+  served and flagged once it is older than `LEADS_TTL_MS` (20 min).
 * Ad spend is cached **per day**. Days older than 3 days (`SPEND_FINAL_AFTER_DAYS`) are treated as final
   and never re-fetched. Recent days refresh every 10 min (`SPEND_TTL_MS`).
 * Meta insights are pulled at `level=account` (one row per day, page size 500) instead of per ad.
