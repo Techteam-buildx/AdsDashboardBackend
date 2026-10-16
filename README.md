@@ -30,7 +30,9 @@ the response says so there instead of silently reporting ₹0 spend.
 * Meta insights are pulled at `level=account` (one row per day, page size 500) instead of per ad.
   Google pulls only date/cost/clicks.
 * A scheduled warm-up (every 5 min) keeps a Lambda container's caches populated.
-* Upstream calls time out after 15–25 s, so the API answers before API Gateway's 29 s limit.
+* Meta/Google calls time out after 15 s. The Zoho function itself takes ~25–30 s (≈8,500 leads), so it is
+  only loaded by the warm-up in normal use; its timeout is 55 s and the Lambda timeout must be 60 s, so a
+  cold container's first load completes even if API Gateway (29 s) has already answered that request.
 
 Caches live in Lambda memory, so a brand-new container pays one slow load. If that turns out
 to matter, the next step is to move the per-day spend + leads into DynamoDB/S3.
@@ -58,7 +60,7 @@ npm start         # local server on :5000 (needs .env)
 
 1. In the Lambda console, note the current handler, runtime and env vars (back them up).
 2. `npm ci --omit=dev`, then zip `index.js lambda.js facebook_Ads.js googleAds.js google_ads.js lib/ node_modules/ package.json`.
-3. Upload the zip, set the handler to `lambda.handler`, memory to 1024 MB, timeout to 29 s.
+3. Upload the zip, set the handler to `lambda.handler`, memory to 1024 MB, timeout to 60 s.
 4. Add an EventBridge rule `rate(5 minutes)` targeting the function with input `{"warm": true}`.
 5. Check: `curl .../dev/test`, then `curl .../dev/app/dashboard/<today>/<today>`, and look at `meta.durationMs`.
    The old widget keeps working because the legacy routes are unchanged.

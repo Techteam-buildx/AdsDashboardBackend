@@ -13,7 +13,7 @@ provider:
   region: ap-south-1
   stage: dev
   memorySize: 1024 # more memory = more CPU for parsing the Zoho payload
-  timeout: 29 # API Gateway's hard limit
+  timeout: 60 # above ZOHO_TIMEOUT_MS so a slow first Zoho load still completes and is cached
   environment:
     ZOHO_API: ${env:ZOHO_API}
     FACEBOOK_ACCESS_TOKEN: ${env:FACEBOOK_ACCESS_TOKEN}

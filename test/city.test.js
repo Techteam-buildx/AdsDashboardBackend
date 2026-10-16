@@ -15,8 +15,11 @@ test('campaigns map to cities by keyword in the name', () => {
   assert.strictEqual(cityForCampaign('BLR | Search | 3BHK'), 'Bangalore');
   assert.strictEqual(cityForCampaign('Leads_Hyderabad_Oct'), 'Hyderabad');
   assert.strictEqual(cityForCampaign('Hosur villas'), 'Hossur');
-  assert.strictEqual(cityForCampaign('Brand awareness'), null);
-  assert.strictEqual(cityForCampaign('Hydrangea project'), null); // no partial-word match
+  assert.strictEqual(cityForCampaign('Hyd_Search_Brand_PM'), 'Hyderabad');
+  assert.strictEqual(cityForCampaign("Hosur_Lead_Gen_Statics_Sep'26"), 'Hossur');
+  // untagged campaigns are Bangalore spend
+  assert.strictEqual(cityForCampaign("Bizbucks_Lead_Gen_Infor Video Nov'25"), 'Bangalore');
+  assert.strictEqual(cityForCampaign('Hydrangea project'), 'Bangalore'); // no partial-word match
 });
 
 const leads = [
@@ -44,7 +47,7 @@ test('city filter restricts both leads and spend', () => {
   const blr = buildLeadsResponse({ leads, facebookSpend, googleSpend, ...range, city: 'Bangalore' });
   assert.strictEqual(blr.facebook_leads, 1);
   assert.strictEqual(blr.google_leads, 1);
-  assert.strictEqual(blr.facebook_budget, 1000);
+  assert.strictEqual(blr.facebook_budget, 1100); // includes the untagged "Brand" campaign
   assert.strictEqual(blr.google_budget, 2000);
   const hyd = buildLeadsResponse({ leads, facebookSpend, googleSpend, ...range, city: 'Hyderabad' });
   assert.strictEqual(hyd.facebook_leads, 1);
@@ -55,7 +58,7 @@ test('city filter restricts both leads and spend', () => {
 test('spendByCity reports unassigned campaigns separately', () => {
   assert.deepStrictEqual(
     spendByCity([...facebookSpend, ...googleSpend], '2026-10-01', '2026-10-01', 0),
-    { Bangalore: 3000, Hyderabad: 500, Unassigned: 100 }
+    { Bangalore: 3100, Hyderabad: 500 }
   );
 });
 
