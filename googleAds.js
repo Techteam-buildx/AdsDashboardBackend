@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { getAccessToken } = require('./google_ads');
 
-const API_VERSION = process.env.GOOGLE_ADS_API_VERSION || 'v19';
+const API_VERSION = process.env.GOOGLE_ADS_API_VERSION || 'v23';
 const REQUEST_TIMEOUT_MS = Number(process.env.GOOGLE_TIMEOUT_MS || 15000);
 // 'ad_group_ad' matches the numbers the dashboard has always shown.
 // 'customer' also includes spend that has no ad_group_ad row (e.g. Performance Max) –
