@@ -2,7 +2,7 @@ string button.getData()
 {
 // Returns the lead data used by the Marketing Dashboard backend.
 // Changes from the previous version:
-//  - adds the lead owner (needed for the City filter) to leads and meetings
+//  - adds the lead owner and "Created By" (needed for the City filter) to leads and meetings
 //  - no longer returns lead names or full mobile numbers; only the mobile length is needed
 //  - removes per-page / per-record `info` logging, which slowed every call down
 // Deploy the updated backend BEFORE saving this version: the old backend cannot read
@@ -31,6 +31,12 @@ for each  page in pagenums
 		{
 			owner_name = owner.get("name");
 		}
+		created_by_name = "";
+		created_by = item.get("Created_By");
+		if(created_by != null)
+		{
+			created_by_name = created_by.get("name");
+		}
 		mobile = item.get("Mobile");
 		mobile_len = 0;
 		if(mobile != null)
@@ -39,7 +45,7 @@ for each  page in pagenums
 		}
 		if(item.get("Meeting_Done_Date") != null)
 		{
-			meeting = {"date":item.get("Meeting_Done_Date").toDateTime().toString("yyyy-MM-dd"),"owner":owner_name};
+			meeting = {"date":item.get("Meeting_Done_Date").toDateTime().toString("yyyy-MM-dd"),"owner":owner_name,"created_by":created_by_name};
 			if(source == "Meta Ads")
 			{
 				fb_meetings.add(meeting);
@@ -53,13 +59,13 @@ for each  page in pagenums
 			{
 				cplead_meetings.add(meeting);
 			}
-			else
+			else if(source == "Google AdWords")
 			{
 				google_meetings.add(meeting);
 				socials_meetings.add(meeting);
 			}
 		}
-		obj = {"date":item.get("Created_Time").toDateTime().toString("yyyy-MM-dd"),"source":source,"mobile_len":mobile_len,"qs":item.get("Qualification_Status"),"iss":item.get("Internal_Sales_Status"),"converted":item.get("Sales_Leads_Status"),"meetingdate":item.get("Meeting_Done_Date"),"cpbudget":item.get("Budget_Lacs"),"owner":owner_name};
+		obj = {"date":item.get("Created_Time").toDateTime().toString("yyyy-MM-dd"),"source":source,"mobile_len":mobile_len,"qs":item.get("Qualification_Status"),"iss":item.get("Internal_Sales_Status"),"converted":item.get("Sales_Leads_Status"),"meetingdate":item.get("Meeting_Done_Date"),"cpbudget":item.get("Budget_Lacs"),"owner":owner_name,"created_by":created_by_name};
 		leads.add(obj);
 	}
 	if(all_leads.size() < per_page)

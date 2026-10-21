@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { cityForOwner, cityForCampaign } = require('../lib/cities');
+const { cityForOwner, cityForLead, cityForCampaign } = require('../lib/cities');
 const { buildLeadsResponse, countMeetings, spendByCity } = require('../lib/aggregate');
 
 test('owners map to cities by first name, case-insensitively', () => {
@@ -77,4 +77,24 @@ test('meetings can be filtered by city when items carry an owner', () => {
   assert.strictEqual(countMeetings(out, '2026-10-01', '2026-10-01').facebook_meeting, 1);
   assert.strictEqual(countMeetings(out, '2026-10-01', '2026-10-01', 'Bangalore').google_meeting, 1);
   assert.strictEqual(countMeetings(out, '2026-10-01', '2026-10-01', 'Bangalore').facebook_meeting, 0);
+});
+
+test("Pankaj's leads are attributed to the Created By user; other leads to the owner", () => {
+  assert.strictEqual(cityForLead('Pankaj Verma', 'Madhuri Nara'), 'Hyderabad');
+  assert.strictEqual(cityForLead('pankaj pankaj', 'shreya shreya'), 'Bangalore');
+  assert.strictEqual(cityForLead('Pankaj Verma', 'Pankaj Verma'), null); // still unassigned
+  assert.strictEqual(cityForLead('Pankaj Verma', undefined), null);
+  assert.strictEqual(cityForLead('Hosur IS', 'Pankaj Verma'), 'Hossur'); // owner wins for others
+  assert.strictEqual(cityForLead('Janardhan N', 'Janardhan N'), null);
+});
+
+test('city filter uses Created By for Pankaj-owned leads', () => {
+  const r = buildLeadsResponse({
+    leads: [
+      { date: '2026-10-01', source: 'Meta Ads', mobile_len: 10, owner: 'Pankaj Verma', created_by: 'Madhuri Nara' },
+      { date: '2026-10-01', source: 'Meta Ads', mobile_len: 10, owner: 'Pankaj Verma', created_by: 'Pankaj Verma' },
+    ],
+    googleSpend: [], facebookSpend: [], startDate: '2026-10-01', endDate: '2026-10-01', city: 'Hyderabad',
+  });
+  assert.strictEqual(r.facebook_leads, 1);
 });

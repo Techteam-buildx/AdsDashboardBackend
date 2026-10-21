@@ -23,13 +23,14 @@ test('aggregates leads and spend per source for the range', () => {
   const r = buildLeadsResponse({ leads, googleSpend, facebookSpend, startDate: '2026-10-01', endDate: '2026-10-03' });
 
   assert.deepStrictEqual(r.labels, ['2026-10-01', '2026-10-02', '2026-10-03']);
-  // Google: counts every lead (incl. no source), spend outside the range ignored
+  // Google: only "Google AdWords" leads with a valid mobile count as leads (the no-source
+  // lead is not Google); spend outside the range ignored
   assert.strictEqual(r.google_budget, 1500);
   assert.strictEqual(r.google_clicks, 15);
-  assert.strictEqual(r.google_leads, 2);
+  assert.strictEqual(r.google_leads, 0);
   assert.strictEqual(r.google_qualified, 1);
-  assert.strictEqual(r.google_future_qualified, 1);
-  assert.strictEqual(r.cpl_google, 750);
+  assert.strictEqual(r.google_future_qualified, 0);
+  assert.strictEqual(r.cpl_google, 0);
   assert.deepStrictEqual(r.google_budgetData, [1000, 0, 500]);
   // Meta: only leads with a 10–13 char mobile are counted
   assert.strictEqual(r.facebook_leads, 1);
@@ -77,4 +78,21 @@ test('mobile_len from the newer Zoho function is used for the mobile check', () 
     googleSpend: [], facebookSpend: [], startDate: '2026-10-01', endDate: '2026-10-01',
   });
   assert.strictEqual(r.facebook_leads, 1);
+});
+
+test('Google = Lead Source "Google AdWords" with a valid mobile; Direct Call / no source / ERP are not counted', () => {
+  const r = buildLeadsResponse({
+    leads: [
+      { date: '2026-10-01', source: 'Google AdWords', mobile_len: 10, iss: 'Meeting Done', qs: 'Qualified' },
+      { date: '2026-10-01', source: 'Google AdWords', mobile_len: 4 },
+      { date: '2026-10-01', source: 'Direct Call', mobile_len: 10, iss: 'Meeting Done' },
+      { date: '2026-10-01', source: null, mobile_len: 10, qs: 'Qualified' },
+      { date: '2026-10-01', source: 'ERP Lead', mobile_len: 10 },
+    ],
+    googleSpend: [], facebookSpend: [], startDate: '2026-10-01', endDate: '2026-10-01',
+  });
+  assert.strictEqual(r.google_leads, 1);
+  assert.strictEqual(r.google_meetings_done, 1);
+  assert.strictEqual(r.google_qualified, 1);
+  assert.strictEqual(r.socials_leads, 1);
 });
